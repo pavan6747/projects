@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Stock Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        canvas {
+            cursor: grab;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="stockChart" width="1200" height="600"></canvas>
+    <script>
+        const socket = io();
+
+        // Initialize Chart.js with zoom and pan options
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Stock Price',
+                    borderColor: 'rgb(75, 192, 192)',
+                    data: [],
+                }]
+            },
+            options: {
+                scales: {
+                    x: [{
+                        type: 'realtime',
+                        realtime: {
+                            onRefresh: (chart) => {
+                                chart.data.labels.push(new Date().toLocaleTimeString());
+                            },
+                            delay: 2000 // Update every 2 seconds
+                        }
+                    }],
+                    y: {
+                        beginAtZero: false,
+                        min: 798,
+                        max: 815
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'start',
+                    },
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'xy' // Drag in both x and y directions
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'xy', // Enable zooming in both x and y directions
+                            limits: {
+                                max: 10,
+                                min: 0.5
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'x', // Enable x-axis scrolling
+                    intersect: false
+                }
+            }
+        });
+
+        // Enable zoom and pan
+        chart.zoom = {
+            enabled: true,
+            mode: 'xy',
+        };
+
+        // Enable chart dragging
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        document.getElementById('stockChart').addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - lastX;
+                const deltaY = e.clientY - lastY;
+                chart.pan({
+                    deltaX: deltaX,
+                    deltaY: deltaY
+                });
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Update chart with historical data
+        socket.on('historicalPrices', (historicalPrices) => {
+            chart.data.labels = Array.from({ length: historicalPrices.length }, (_, i) => new Date().toLocaleTimeString());
+            chart.data.datasets[0].data = historicalPrices;
+            chart.update();
+        });
+
+        // Update chart with real-time data
+        socket.on('updateStockPrice', (stockPrice) => {
+            chart.data.labels.push(new Date().toLocaleTimeString());
+            chart.data.datasets[0].data.push(stockPrice);
+
+            // Only keep the last 100 data points for better visualization
+            if (chart.data.labels.length > 100) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.update();
+        });
+    </script>
+</body>
+
+</html>
