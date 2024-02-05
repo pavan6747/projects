@@ -1,0 +1,52 @@
+/* public/styles.css */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    transition: background-color 0.3s ease;
+}
+
+#app {
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+form {
+    margin-top: 20px;
+}
+
+button {
+    /* Use Bootstrap classes for styling */
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+ul {
+    /* Use Bootstrap classes for styling */
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    /* Use Bootstrap classes for styling */
+    background-color: #fff;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Add more Bootstrap styles and transitions as needed */
