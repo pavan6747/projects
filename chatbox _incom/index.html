@@ -1,0 +1,127 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.IO Chat</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      padding: 20px;
+    }
+    #messages {
+      list-style-type: none;
+      padding: 0;
+    }
+    #messages li {
+      margin-bottom: 10px;
+    }
+    #chat-input {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <h2 class="text-center mt-4">Socket.IO Chat</h2>
+        <ul id="messages" class="mb-3"></ul>
+        
+        <!-- Chat Input Area -->
+        <div class="input-group" id="chat-input">
+          <input id="m" class="form-control" autocomplete="off" />
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="button" id="sendBtn">Send</button>
+          </div>
+        </div>
+        
+        <hr>
+        <label for="identity">Choose your identity:</label>
+        <select id="identity" class="form-control mb-3">
+          <option value="userA">User A</option>
+          <option value="userB">User B</option>
+        </select>
+        
+        <div class="text-center">
+          <button id="endChat" class="btn btn-danger">End Chat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+  <script>
+    const identitySelect = document.getElementById('identity');
+    const messages = document.getElementById('messages');
+    let socket;
+    let chatLog = [];
+
+    // Function to initialize the socket connection
+    function initializeSocket(namespace) {
+      socket = io(`/${namespace}`);
+
+      // Handle form submission
+      document.getElementById('sendBtn').addEventListener('click', () => {
+        const message = document.getElementById('m').value.trim();
+        if (message !== '') {
+          socket.emit('chat message', message);
+          document.getElementById('m').value = '';
+        }
+      });
+
+      // Listen for incoming messages
+      socket.on('chat message', (msg) => {
+        const li = document.createElement('li');
+        li.textContent = msg;
+        messages.appendChild(li);
+        chatLog.push(msg);
+      });
+    }
+
+    // Switch namespace when the user changes their identity
+    identitySelect.addEventListener('change', () => {
+      const newNamespace = identitySelect.value;
+
+      // Disconnect from the current namespace, if connected
+      if (socket) {
+        socket.disconnect();
+      }
+
+      // Connect to the new namespace
+      initializeSocket(newNamespace);
+    });
+
+    // Save chat button functionality
+    function redirectToSaveChat() {
+      const chatContent = chatLog.join('\n');
+      const blob = new Blob([chatContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'chat.txt';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // End chat button functionality
+    document.getElementById('endChat').addEventListener('click', () => {
+      const confirmEnd = window.confirm('Do you want to save the chat for reference?');
+      if (confirmEnd) {
+        // Perform any additional actions before ending the chat
+        // For example, you can save the chat or perform cleanup operations
+        // Then redirect to the saveChat function
+        redirectToSaveChat();
+      }
+    });
+
+    // Initialize socket with the default namespace
+    initializeSocket('userA');
+  </script>
+</body>
+</html>
